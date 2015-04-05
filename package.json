@@ -1,0 +1,22 @@
+{
+  "name": "twitter-clone",
+  "version": "0.0.0",
+  "description": "A Twitter clone built on Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeffreychan637/twitter-clone.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeffreychan637/twitter-clone/issues"
+  },
+  "homepage": "https://github.com/jeffreychan637/twitter-clone",
+  "dependencies": {
+    "express": "^4.12.3"
+  }
+}
