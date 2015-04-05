@@ -29,7 +29,7 @@ fixtures.tweets = [ { id: '1',
                   ,
                     { id: '3',
                       userId: 'billgates',
-                     created: 1418288400,
+                      created: 1418288400,
                       text: '2 billion people don\'t have a bank account'
                     }
                  ];
