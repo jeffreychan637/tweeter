@@ -1,12 +1,13 @@
 'use strict';
 
-var express = require('express');
-var where = require('lodash/collection/where');
-var find = require('lodash/collection/find');
-var fixtures = require('./fixtures');
+var express = require('express'),
+    bodyParser = require('body-parser'),
+    where = require('lodash/collection/where'),
+    find = require('lodash/collection/find'),
+    fixtures = require('./fixtures');
 
-var app = express();
-var server = app.listen(3000, '127.0.0.1');
+var app = express(),
+    server = app.listen(3000, '127.0.0.1');
 
 app.get('/', function (req, res) {
   res.status(200);
@@ -35,6 +36,28 @@ app.get('/api/users/:userId', function (req, res) {
     } else {
       res.status(404).send('Not Found');
     }
+});
+
+app.post('/api/users', bodyParser.json(), function(req, res) {
+  if (!req.body.user) {
+    res.status(400).send('Bad Request');
+  } else {
+    var user = req.body.user;
+    if (find(fixtures.users, {id: user.id})) {
+      res.status(409).send('User already exists');
+    } else {
+      var newUser = {};
+      //Choosing to manually copy over user properies just in case
+      //random properties were added in POST request
+      newUser.id = user.id;
+      newUser.name = user.name;
+      newUser.email = user.email;
+      newUser.password = user.password;
+      newUser.followingIds = [];
+      fixtures.users.push(newUser);
+      res.status(200).send('Success');
+    }
+  }
 });
 
 /* Comparison function for Tweets. Tweets created more recently are
