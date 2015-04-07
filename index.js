@@ -2,6 +2,9 @@
 
 var express = require('express'),
     bodyParser = require('body-parser'),
+    cookieParser = require('cookie-parser'),
+    session  = require('express-session'),
+    passport = require('./auth'),
     _where = require('lodash/collection/where'),
     _find = require('lodash/collection/find'),
     _max = require('lodash/math/max'),
@@ -10,6 +13,18 @@ var express = require('express'),
 
 var app = express(),
     server = app.listen(3000, '127.0.0.1');
+
+app.use(bodyParser.json());
+app.use(cookieParser());
+
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get('/', function (req, res) {
   res.status(200);
@@ -51,7 +66,7 @@ app.get('/api/users/:userId', function (req, res) {
     }
 });
 
-app.post('/api/users', bodyParser.json(), function(req, res) {
+app.post('/api/users', function(req, res) {
   if (!req.body.user) {
     res.status(400).send('Bad Request');
   } else {
@@ -73,7 +88,7 @@ app.post('/api/users', bodyParser.json(), function(req, res) {
   }
 });
 
-app.post('/api/tweets', bodyParser.json(), function(req, res) {
+app.post('/api/tweets', function(req, res) {
   if (!req.body.tweet) {
     res.status(400).send('Bad Request');
   } else {
