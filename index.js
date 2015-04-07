@@ -5,6 +5,7 @@ var express = require('express'),
     _where = require('lodash/collection/where'),
     _find = require('lodash/collection/find'),
     _max = require('lodash/math/max'),
+    _remove = require('lodash/array/remove'),
     fixtures = require('./fixtures');
 
 var app = express(),
@@ -26,6 +27,17 @@ app.get('/api/tweets', function (req, res) {
   } else {
     res.status(400).send('Bad Request');
   }
+});
+
+app.get('/api/tweets/:tweetId', function (req, res) {
+    var tweet = _find(fixtures.tweets, {id: req.params.tweetId});
+    if (tweet) {
+      res.status(200);
+      res.set('Content-Type', 'application/json');
+      res.json({"tweet" : tweet});
+    } else {
+      res.status(404).send('Not Found');
+    }
 });
 
 app.get('/api/users/:userId', function (req, res) {
@@ -82,6 +94,15 @@ app.post('/api/tweets', bodyParser.json(), function(req, res) {
     res.status(200);
     res.set('Content-Type', 'application/json');
     res.json({"tweet" : newTweet});
+  }
+});
+
+app.delete('/api/tweets/:tweetId', function(req, res) {
+  var deletedTweet = _remove(fixtures.tweets, {id: req.params.tweetId});
+  if (deletedTweet && deletedTweet.length > 0) {
+    res.status(200).send('Success');
+  } else {
+    res.status(404).send('Not Found');
   }
 });
 
