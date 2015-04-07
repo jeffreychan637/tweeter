@@ -2,8 +2,9 @@
 
 var express = require('express'),
     bodyParser = require('body-parser'),
-    where = require('lodash/collection/where'),
-    find = require('lodash/collection/find'),
+    _where = require('lodash/collection/where'),
+    _find = require('lodash/collection/find'),
+    _max = require('lodash/math/max'),
     fixtures = require('./fixtures');
 
 var app = express(),
@@ -19,7 +20,7 @@ app.get('/api/tweets', function (req, res) {
   if (req.query.userId) {
     res.status(200);
     res.set('Content-Type', 'application/json');
-    var tweets = where(fixtures.tweets, {userId: req.query.userId});
+    var tweets = _where(fixtures.tweets, {userId: req.query.userId});
     tweets.sort(compareByTime);
     res.json({'tweets': tweets});
   } else {
@@ -28,11 +29,11 @@ app.get('/api/tweets', function (req, res) {
 });
 
 app.get('/api/users/:userId', function (req, res) {
-    var user = find(fixtures.users, {id: req.params.userId});
+    var user = _find(fixtures.users, {id: req.params.userId});
     if (user) {
       res.status(200);
       res.set('Content-Type', 'application/json');
-      res.json({'user': user});
+      res.json({"user" : user});
     } else {
       res.status(404).send('Not Found');
     }
@@ -43,7 +44,7 @@ app.post('/api/users', bodyParser.json(), function(req, res) {
     res.status(400).send('Bad Request');
   } else {
     var user = req.body.user;
-    if (find(fixtures.users, {id: user.id})) {
+    if (_find(fixtures.users, {id: user.id})) {
       res.status(409).send('User already exists');
     } else {
       var newUser = {};
@@ -57,6 +58,30 @@ app.post('/api/users', bodyParser.json(), function(req, res) {
       fixtures.users.push(newUser);
       res.status(200).send('Success');
     }
+  }
+});
+
+app.post('/api/tweets', bodyParser.json(), function(req, res) {
+  if (!req.body.tweet) {
+    res.status(400).send('Bad Request');
+  } else {
+    var tweet = req.body.tweet;
+    var newTweet = {};
+    //Choosing to manually copy over tweet properies just in case
+    //random properties were added in POST request
+    newTweet.userId = tweet.userId;
+    newTweet.name = tweet.text;
+    var max = _max(fixtures.tweets, 'id').id;
+    if (isFinite(max)) {
+      newTweet.id = parseInt(max) + 1;
+    } else {
+      newTweet.id = 1; //first tweet
+    }
+    newTweet.created = Math.floor(Date.now() / 1000);
+    fixtures.tweets.push(newTweet);
+    res.status(200);
+    res.set('Content-Type', 'application/json');
+    res.json({"tweet" : newTweet});
   }
 });
 
