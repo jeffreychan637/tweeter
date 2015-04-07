@@ -83,12 +83,17 @@ app.post('/api/users', function(req, res) {
       newUser.password = user.password;
       newUser.followingIds = [];
       fixtures.users.push(newUser);
-      res.status(200).send('Success');
+      req.logIn(newUser, function(err) {
+        if (err) {
+          return res.status(500).send('Internal Server Error');
+        }
+        res.status(200).send('Success');
+      });
     }
   }
 });
 
-app.post('/api/tweets', function(req, res) {
+app.post('/api/tweets', ensureAuthentication, function(req, res) {
   if (!req.body.tweet) {
     res.status(400).send('Bad Request');
   } else {
@@ -96,7 +101,7 @@ app.post('/api/tweets', function(req, res) {
     var newTweet = {};
     //Choosing to manually copy over tweet properies just in case
     //random properties were added in POST request
-    newTweet.userId = tweet.userId;
+    newTweet.userId = req.user.id;
     newTweet.name = tweet.text;
     var max = _max(fixtures.tweets, 'id').id;
     if (isFinite(max)) {
@@ -112,14 +117,56 @@ app.post('/api/tweets', function(req, res) {
   }
 });
 
-app.delete('/api/tweets/:tweetId', function(req, res) {
-  var deletedTweet = _remove(fixtures.tweets, {id: req.params.tweetId});
-  if (deletedTweet && deletedTweet.length > 0) {
-    res.status(200).send('Success');
+app.post('/api/auth/login', function(req, res) {
+  passport.authenticate('local', function(err, user, info) {
+    if (err) {
+      return res.status(500).send('Internal Server Error');
+    }
+    if (!user) {
+      return res.status(403).send('Forbidden');
+    }
+    req.logIn(user, function(err) {
+      if (err) {
+        return res.status(500).send('Internal Server Error');
+      }
+      res.status(200);
+      return res.json({"user" : user});
+    });
+  })(req, res);
+});
+
+app.post('/api/auth/logout', function(req, res) {
+  req.logout();
+  res.status(200).send('Success');
+
+});
+
+app.delete('/api/tweets/:tweetId', ensureAuthentication, function(req, res) {
+  var toBeDeletedTweet = _find(fixtures.tweets, {id: req.params.tweetId});
+  if (toBeDeletedTweet) {
+    if (toBeDeletedTweet.userId === req.user.id) {
+      var deletedTweet = _remove(fixtures.tweets, {id: req.params.tweetId});
+      if (deletedTweet && deletedTweet.length > 0) {
+        res.status(200).send('Success');
+      } else {
+        res.status(500).send('Internal Server Error');
+      }
+    } else {
+      res.status(403).send('Forbidden');
+    }
   } else {
     res.status(404).send('Not Found');
   }
 });
+
+/* Middleware that checks if user is authenticated or not. */
+function ensureAuthentication(req, res, next) {
+  if (!req.isAuthenticated()) {
+    res.status(403).send('Fobidden');
+  } else {
+    next();
+  }
+};
 
 /* Comparison function for Tweets. Tweets created more recently are
    considered smaller.
@@ -132,6 +179,6 @@ function compareByTime(a, b) {
     } else {
       return 0;
     }
-  };
+};
 
 module.exports = server;
